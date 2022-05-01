@@ -1,5 +1,81 @@
-from urllib import response
-from flask import Blueprint, jsonify, abort, make_response
+from flask import Blueprint, jsonify, abort, make_response, request
+from app.models.book import Book
+from app import db
+
+books_bp = Blueprint("books", __name__, url_prefix="/books")
+
+@books_bp.route("", methods=["POST", "GET"])
+def handle_books():
+    if request.method == "POST":
+            res = request.get_json()
+            book = Book(
+                title = res["title"],
+                description = res["description"]
+            )
+
+            db.session.add(book)
+            db.session.commit()
+
+            return make_response(
+                f"Book {book.title} ID {book.id} successfully created", 200
+            )
+
+    elif request.method == "GET":
+        books = Book.query.all()
+        res = []
+        for book in books:
+            res.append({
+                "id":book.id,
+                "title": book.title,
+                "description" : book.description
+            })
+
+        return  jsonify(res), 200
+
+@books_bp.route("/<id>", methods=["GET", "PUT", "DELETE"])
+def handle_book(id):
+    book = valid_book(id)
+    if request.method == "GET":
+        return {
+                    "id":book.id,
+                    "title": book.title,
+                    "description" : book.description
+                }, 200
+    
+    elif request.method == "PUT":
+       res = request.get_json()
+
+       book.title = res["title"]
+       book.description = res["description"]
+
+       db.session.commit()
+
+       return make_response({
+           "message": f"Book {id} has been updated successfully.",
+           "data": {
+               "id" : book.id,
+               "title": book.title,
+               "description": book.description
+           }
+       }, 200)
+
+    elif request.method == "DELETE":
+        db.session.delete(book)
+        db.session.commit()
+        return make_response(f"Book #{id} successfully deleted", 200)
+
+
+def valid_book(id):
+    try:
+        id = int(id)
+    except:
+        abort(make_response({"message":f"book {id} invalid"}, 400))
+    
+    book = Book.query.get(id)  # pass in PK.   Model.query.get(PK)
+    if not book:
+        abort(make_response({"message":f"book {id} not found"}, 404))
+    return book
+
 
 '''
 HELLO WORLD
@@ -44,14 +120,6 @@ BOOK HARDCODE
 #     Book(3, "Fictional Book Title", "A fantasy novel set in an imaginary world.")
 # ] 
 
-# books_bp = Blueprint("books", __name__, url_prefix="/books")
-# @books_bp.route("", methods=["GET"])
-# def get_all_books():
-#     res = []
-#     for book in books:
-#         res.append({"id": book.id, "title": book.title, 
-#                     "description": book.description})
-#     return jsonify(res)
 
 # @books_bp.route("/<book_id>", methods=["GET"])
 # def handle_book(book_id):
