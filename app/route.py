@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, abort, make_response, request
 from app.models.book import Book
 from app import db
 
+print(Book)
+
 books_bp = Blueprint("books", __name__, url_prefix="/books")
 
 @books_bp.route("", methods=["POST", "GET"])
@@ -21,7 +23,13 @@ def handle_books():
             )
 
     elif request.method == "GET":
-        books = Book.query.all()
+        
+        param = request.args.get("title")
+        if param:
+            books = Book.query.filter_by(title = param)
+        else:
+            books = Book.query.all()
+
         res = []
         for book in books:
             res.append({
