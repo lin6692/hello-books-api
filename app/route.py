@@ -19,7 +19,7 @@ def handle_books():
             db.session.commit()
 
             return make_response(
-                f"Book {book.title} ID {book.id} successfully created", 200
+                f"Book {book.title} successfully created", 201
             )
 
     elif request.method == "GET":
@@ -70,7 +70,7 @@ def handle_book(id):
     elif request.method == "DELETE":
         db.session.delete(book)
         db.session.commit()
-        return make_response(f"Book #{id} successfully deleted", 200)
+        return make_response(jsonify(f"Book #{id} successfully deleted"), 200)
 
 
 def valid_book(id):
